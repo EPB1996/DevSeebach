@@ -1,6 +1,10 @@
-package UserCreation;
+package GroundZero;
 
 
+import Command.CommandOperationExecuter;
+import Command.Command;
+import Command.TextCommandOperation;
+import Command.PhotoCommandOperation;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -9,42 +13,28 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class MessageHandler extends TelegramLongPollingBot {
     long op = 198057550;
-
+    CommandOperationExecuter commandOperationExecuter = new CommandOperationExecuter();
 
 
     public void onUpdateReceived(Update update) {
-
-        if(update.getMessage().hasText())
-            handleTextCommand(update);
-
-
-
-
-
-
-    }
-
-    private void handleTextCommand(Update update){
         Message message = update.getMessage();
-        String command = message.getText();
-        long chatId = message.getChatId();
+        SendMessage response = new SendMessage();
 
-        SendMessage answerMessage = new SendMessage();
-        answerMessage.setChatId(new Long(0));
-
-        if(command.equals("test")){
-            answerMessage.setText("Test");
+        if(message.hasText()) {
+                response = commandOperationExecuter.reactToIncomingMessage(new TextCommandOperation(new Command(message)));
+        }else if(message.hasPhoto()){
+                response = commandOperationExecuter.reactToIncomingMessage(new PhotoCommandOperation(new Command(message)));
         }
+
+
+
 
         try {
-            execute(answerMessage);
+            execute(response);
         } catch (TelegramApiException e) {
-            notifyOp(e);
             e.printStackTrace();
         }
-
     }
-
 
     private void notifyOp(TelegramApiException e){
         /*

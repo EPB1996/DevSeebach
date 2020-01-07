@@ -48,7 +48,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>UserCreation.GroundZero</mainClass>
+                            <mainClass>GroundZero.GroundZero</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
