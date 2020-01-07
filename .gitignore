@@ -5,6 +5,8 @@
 
 ### Classes ###
 Secrets.class
+Secrets.java
+
 ### Database ###
 *.accdb
 *.db
