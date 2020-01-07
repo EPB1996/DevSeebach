@@ -1,6 +1,5 @@
 package Command;
 
-import groovy.ui.SystemOutputInterceptor;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.util.ArrayList;
