@@ -36,7 +36,7 @@ public class MessageHandler extends TelegramLongPollingBot {
         }
     }
 
-    private void notifyOp(TelegramApiException e){
+    public void notifyOp(Exception e){
         /*
             TODO: i) weiteren Bot, für die Neustartung etc des eigentlichen Bots.
          */
