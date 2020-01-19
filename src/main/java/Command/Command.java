@@ -5,9 +5,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -41,9 +45,10 @@ public class Command {
     }
 
     SendMessage handleTextCommand() {
-
+        sendMessage.setText("Unknown command.");
         Connect c = new Connect();
-        if (command.equals("dbtest")) {
+
+        if (command.equals("New Group")) {
             c.insertNewGroup(user.getId());
 
             sendMessage.setText("Group Created");
@@ -52,6 +57,35 @@ public class Command {
         if (command.equals("register")) {
             c.insertUnregeisteredUser(user.getId(), user.getUserName());
             sendMessage.setText("Successfully Registered");
+        }
+
+        if(command.equals("Manage Group")){
+            HashMap<Integer,String > groups = c.getGroups(user.getId());
+            for(Integer id:groups.keySet()){
+                System.out.println(groups.get(id));
+            }
+
+        }
+
+        if(command.equals("/menu")){
+
+            //TODO: Menu only availible for owner
+            ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+
+            List<KeyboardRow> keyboard = new ArrayList<>();
+
+            KeyboardRow row = new KeyboardRow();
+
+            row.add("New Group");
+            row.add("Manage Group");
+            row.add("Report Problem");
+
+            keyboard.add(row);
+
+            keyboardMarkup.setKeyboard(keyboard);
+
+            sendMessage.setText("Here is your menu");
+            sendMessage.setReplyMarkup(keyboardMarkup);
         }
 
 

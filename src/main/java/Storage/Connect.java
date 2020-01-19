@@ -1,9 +1,8 @@
 package Storage;
 
-import groovy.ui.SystemOutputInterceptor;
-
 import java.sql.*;
 import java.util.Calendar;
+import java.util.HashMap;
 
 /**
  * @author sqlitetutorial.net
@@ -67,6 +66,34 @@ public class Connect {
 
         }
 
+    }
+
+    /**
+     * Get all associated groups of chatID
+     *
+     * @param ownerId   ChatId of the owner
+     *
+     * returns groups
+     * @return
+     */
+    public HashMap<Integer,String> getGroups(int ownerId){
+        HashMap<Integer,String> groups = new HashMap<>();
+
+        String sql = "SELECT GroupId, OwnerName FROM [Group] WHERE GroupOwner = " +ownerId;
+
+        try (Connection conn = this.connect();
+             Statement stmt  = conn.createStatement();
+             ResultSet rs    = stmt.executeQuery(sql)){
+
+            while (rs.next()) {
+                groups.put(rs.getInt("GroupId"), rs.getString("OwnerName"));
+
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return groups;
     }
 
 }
