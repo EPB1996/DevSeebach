@@ -12,8 +12,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class MessageHandler extends TelegramLongPollingBot {
-    long op = 198057550;
-    CommandOperationExecuter commandOperationExecuter = new CommandOperationExecuter();
+    private long op = 198057550;
+    private CommandOperationExecuter commandOperationExecuter = new CommandOperationExecuter();
 
 
     public void onUpdateReceived(Update update) {
@@ -36,7 +36,7 @@ public class MessageHandler extends TelegramLongPollingBot {
         }
     }
 
-    private void notifyOp(TelegramApiException e){
+    public void notifyOp(Exception e) {
         /*
             TODO: i) weiteren Bot, für die Neustartung etc des eigentlichen Bots.
          */

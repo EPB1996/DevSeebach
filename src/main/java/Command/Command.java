@@ -1,10 +1,11 @@
 package Command;
 
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import Storage.Connect;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.User;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,14 +40,25 @@ public class Command {
         this.sendMessage.setChatId(chatId);
     }
 
-    public SendMessage handleTextCommand(){
+    SendMessage handleTextCommand() {
 
-        this.sendMessage.setText(command);
+        Connect c = new Connect();
+        if (command.equals("dbtest")) {
+            c.insertNewGroup(user.getId());
+
+            sendMessage.setText("Group Created");
+        }
+
+        if (command.equals("register")) {
+            c.insertUnregeisteredUser(user.getId(), user.getUserName());
+            sendMessage.setText("Successfully Registered");
+        }
+
 
         return sendMessage;
     }
 
-    public SendMessage handlePhotoCommand(){
+    SendMessage handlePhotoCommand() {
         /*
         TODO: set callback (do you want to upload this photo?)
          */
@@ -54,7 +66,7 @@ public class Command {
         return sendMessage;
     }
 
-    public String print(){
+    String print() {
         return date + " :\t " + user.getUserName() + " \t " + command;
     }
 }
