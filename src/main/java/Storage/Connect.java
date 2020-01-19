@@ -50,6 +50,7 @@ public class Connect {
      * create new group which has access to fotowall
      *
      * @param ownerId :fotowall owner who started this group
+     * @param groupName name of the group
      */
     public void insertNewGroup(int ownerId) {
 
@@ -59,6 +60,7 @@ public class Connect {
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, ownerId);
+
             // create a new table
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -76,24 +78,24 @@ public class Connect {
      * returns groups
      * @return
      */
-    public HashMap<Integer,String> getGroups(int ownerId){
-        HashMap<Integer,String> groups = new HashMap<>();
+    public int getGroupId(int ownerId){
 
-        String sql = "SELECT GroupId, OwnerName FROM [Group] WHERE GroupOwner = " +ownerId;
+        int groupId = 0;
+        String sql = "SELECT GroupId FROM [Group] WHERE GroupOwner = " +ownerId;
 
         try (Connection conn = this.connect();
              Statement stmt  = conn.createStatement();
              ResultSet rs    = stmt.executeQuery(sql)){
 
-            while (rs.next()) {
-                groups.put(rs.getInt("GroupId"), rs.getString("OwnerName"));
 
-            }
+                groupId = rs.getInt("GroupId");
+
+
         } catch (SQLException e) {
             System.out.println(e.getMessage());
 
         }
-        return groups;
+        return groupId;
     }
 
 }

@@ -5,13 +5,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 
@@ -25,10 +25,10 @@ public class Command {
 
 
     public Command(Message message) {
-        if(message.hasText()){
+        if (message.hasText()) {
             this.command = message.getText();
             this.photo = null;
-        }else{
+        } else {
             this.command = "photo";
             this.photo = message.getPhoto();
         }
@@ -39,7 +39,7 @@ public class Command {
 
     }
 
-    private void prepareAnswer(long chatId){
+    private void prepareAnswer(long chatId) {
         this.sendMessage = new SendMessage();
         this.sendMessage.setChatId(chatId);
     }
@@ -49,6 +49,8 @@ public class Command {
         Connect c = new Connect();
 
         if (command.equals("New Group")) {
+
+
             c.insertNewGroup(user.getId());
 
             sendMessage.setText("Group Created");
@@ -59,17 +61,36 @@ public class Command {
             sendMessage.setText("Successfully Registered");
         }
 
-        if(command.equals("Manage Group")){
-            HashMap<Integer,String > groups = c.getGroups(user.getId());
-            for(Integer id:groups.keySet()){
-                System.out.println(groups.get(id));
-            }
+        if (command.equals("Manage Group")) {
+            int groupId = c.getGroupId(user.getId());
+            System.out.println(groupId);
 
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+            InlineKeyboardButton showGroupMember = new InlineKeyboardButton().setText("Group Member")
+                    .setCallbackData("Memberlist");
+            InlineKeyboardButton deleteMember = new InlineKeyboardButton().setText("Delete Member")
+                    .setCallbackData("DeleteProcess");
+            InlineKeyboardButton addMember = new InlineKeyboardButton().setText("Add Member")
+                    .setCallbackData("AddProcess");
+
+            rowInline.add(showGroupMember);
+            rowInline.add(deleteMember);
+            rowInline.add(addMember);
+
+
+            rowsInline.add(rowInline);
+
+            markupInline.setKeyboard(rowsInline);
+            sendMessage.setText("Actions:");
+            sendMessage.setReplyMarkup(markupInline);
         }
 
-        if(command.equals("/menu")){
+        if (command.equals("/menu")) {
 
-            //TODO: Menu only availible for owner
+            //TODO: Menu only availible for owner && class for makrups?
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
 
             List<KeyboardRow> keyboard = new ArrayList<>();
@@ -86,6 +107,7 @@ public class Command {
 
             sendMessage.setText("Here is your menu");
             sendMessage.setReplyMarkup(keyboardMarkup);
+
         }
 
 
