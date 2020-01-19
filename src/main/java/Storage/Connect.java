@@ -1,6 +1,9 @@
 package Storage;
 
+import groovy.ui.SystemOutputInterceptor;
+
 import java.sql.*;
+import java.util.Calendar;
 
 /**
  *
@@ -15,7 +18,7 @@ public class Connect {
 
     private Connection connect() {
         // SQLite connection string
-        String url = "jdbc:sqlite:C://Users/EPB-Surface/IdeaProjects/DevSeebach/tests.db";
+        String url = "jdbc:sqlite:C://Users/EPB/IdeaProjects/fotoseebach/tests.db";
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
@@ -29,7 +32,7 @@ public class Connect {
      * Insert a new row into the warehouses table
      *
      * @param UserId
-     * @param UserName
+         * @param UserName
      */
     public void insertUnregeisteredUser(int UserId, String UserName) {
         String sql = "INSERT INTO RegisteredUser(UserId, UserName, RegisteredSince) VALUES(?,?,?)";
@@ -38,7 +41,7 @@ public class Connect {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, UserId);
             pstmt.setString(2, UserName);
-            pstmt.setInt(3,1);
+            pstmt.setDate(3, new java.sql.Date(Calendar.getInstance().getTime().getTime()));
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
