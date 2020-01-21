@@ -35,14 +35,11 @@ public class Command {
         this.user = message.getFrom();
         this.chatId = message.getChatId();
         this.date = java.time.LocalDateTime.now();
-        prepareAnswer(chatId);
-
-    }
-
-    private void prepareAnswer(long chatId) {
         this.sendMessage = new SendMessage();
         this.sendMessage.setChatId(chatId);
+
     }
+
 
     SendMessage handleTextCommand() {
         sendMessage.setText("Unknown command.");
