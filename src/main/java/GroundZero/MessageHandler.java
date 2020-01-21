@@ -21,7 +21,7 @@ public class MessageHandler extends TelegramLongPollingBot {
         SendMessage response = new SendMessage();
 
         if(update.hasCallbackQuery()){
-            //TODO: make Callback 
+            //TODO: make Callback
         }else {
             if (message.hasText()) {
                 response = commandOperationExecuter.reactToIncomingMessage(new TextCommandOperation(new Command(message)));
