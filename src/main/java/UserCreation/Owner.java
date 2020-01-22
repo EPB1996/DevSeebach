@@ -7,7 +7,7 @@ public class Owner implements LocalUser {
     private String lastName;
     private int chatID;
 
-    public Owner(User user){
+    public Owner(User user) {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.chatID = user.getId();

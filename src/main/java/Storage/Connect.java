@@ -3,6 +3,8 @@ package Storage;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author sqlitetutorial.net
@@ -31,6 +33,7 @@ public class Connect {
      * @param UserId   USerID
      * @param UserName UserName from Telegram, not actual name
      */
+
     public void insertUnregeisteredUser(int UserId, String UserName) {
         String sql = "INSERT INTO RegisteredUser(UserId, UserName, RegisteredSince) VALUES(?,?,?)";
 
@@ -45,12 +48,54 @@ public class Connect {
         }
     }
 
+    /**
+     * Remove User from groupAssociationList
+     *
+     * @param groupid id of group
+     * @param userid  id of user
+     */
+    public void deleteMemberFromGroup(long groupid, String userid) {
+        String sql = "DELETE FROM UserGroup WHERE (GroupId,UserId) = (?,?)";
+
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, groupid);
+            pstmt.setString(2, userid);
+
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+    }
+
+    /**
+     *Add member to group
+     * @param groupid id of group
+     * @param userid  id of user
+     */
+    public void addMemberToGroup(long groupid, String userid){
+        String sql = "INSERT INTO UserGroup(GroupId,UserId, UserName, MemberSince,PostNumber) VALUES(?,?,?,?,0)";
+        int realId = Integer.parseInt(userid.split("!")[1]);
+        String realName = userid.split("!")[0];
+
+        try (Connection conn = this.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, (int) groupid);
+            pstmt.setInt(2, realId);
+            pstmt.setString(3, realName);
+            pstmt.setDate(4, new java.sql.Date(Calendar.getInstance().getTime().getTime()));
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
     /**
      * create new group which has access to fotowall
      *
      * @param ownerId :fotowall owner who started this group
-     *
      */
     public void insertNewGroup(int ownerId) {
 
@@ -73,22 +118,22 @@ public class Connect {
     /**
      * Get all associated groups of chatID
      *
-     * @param ownerId   ChatId of the owner
-     *
-     * returns groups
+     * @param ownerId ChatId of the owner
+     *                <p>
+     *                returns groups
      * @return
      */
-    public int getGroupId(int ownerId){
+    public int getGroupId(int ownerId) {
 
         int groupId = 0;
-        String sql = "SELECT GroupId FROM [Group] WHERE GroupOwner = " +ownerId;
+        String sql = "SELECT GroupId FROM [Group] WHERE GroupOwner = " + ownerId;
 
         try (Connection conn = this.connect();
-             Statement stmt  = conn.createStatement();
-             ResultSet rs    = stmt.executeQuery(sql)){
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
 
-                groupId = rs.getInt("GroupId");
+            groupId = rs.getInt("GroupId");
 
 
         } catch (SQLException e) {
@@ -98,25 +143,50 @@ public class Connect {
         return groupId;
     }
 
+    /**
+     * Get All registered User which are not already added to you
+     * @param   chatId  to get memberlist of group associated with chatid
+     */
+    public HashMap<String,String> getAvailableUsers(long chatId){
+        HashMap<String, String> res = new HashMap<>();
+
+        String sql = "SELECT t1.UserId,t1.UserName\n" +
+                "FROM RegisteredUser t1\n" +
+                "LEFT JOIN UserGroup t2 ON t2.UserName = t1.UserName\n" +
+                "WHERE t2.UserName IS NULL";
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.put(String.valueOf(rs.getInt("UserId")), rs.getString("UserName"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+    }
+
 
     /**
-     * Get Memberlist
+     * Get Memberlist of owener of a fotowall
      *
-     * @param   ownerId
+     * @param ownerId
      */
-    public HashMap<Long,String> getMemberlist(long ownerId){
-        HashMap<Long,String > res = new HashMap<>();
+    public HashMap<String, String> getMemberlist(long ownerId) {
+        HashMap<String, String> res = new HashMap<>();
         String sql = "SELECT UserId,UserName FROM [UserGroup] WHERE GroupId = " + ownerId;
 
         try (Connection conn = this.connect();
-             Statement stmt  = conn.createStatement();
-             ResultSet rs    = stmt.executeQuery(sql)){
-            System.out.println(rs.getInt("UserId"));
-            while(rs.next()) {
-                res.put((long) rs.getInt("UserId"), rs.getString("UserName"));
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                res.put(String.valueOf(rs.getInt("UserId")), rs.getString("UserName"));
             }
             System.out.println(res.get(rs.getLong("UserId")));
-
 
 
         } catch (SQLException e) {
@@ -126,4 +196,55 @@ public class Connect {
         return res;
 
     }
+
+    /**
+     * Get user associated with group
+     *
+     * @param groupid id of group
+     * @param userid  id of user
+     */
+    public HashMap<String, String> getGroupMember(long groupid, Integer userid) {
+        HashMap<String, String> res = new HashMap<>();
+        String sql = "SELECT UserName,MemberSince,PostNumber FROM (SELECT * FROM UserGroup WHERE UserId = "
+                + userid + ") WHERE GroupId = " + groupid;
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.put("UserName", rs.getString("UserName"));
+                res.put("MemberSince", String.valueOf(rs.getDate("MemberSince")));
+                res.put("PostNumber", String.valueOf(rs.getInt("PostNumber")));
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
+    }
+
+    public Set<String[]> getFullMemberInformation(long ownerId){
+        Set<String[]> res = new HashSet<>();
+        String sql = "SELECT UserName,MemberSince,PostNumber FROM [UserGroup] WHERE GroupId = " + ownerId;
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.add(new String[]{rs.getString("UserName"),String.valueOf(rs.getDate("MemberSince")),
+                String.valueOf(rs.getInt("PostNumber"))});
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
+    }
+
+
 }

@@ -7,7 +7,7 @@ public class Contributor implements LocalUser {
     private String lastName;
     private int chatID;
 
-    public Contributor(User user){
+    public Contributor(User user) {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.chatID = user.getId();

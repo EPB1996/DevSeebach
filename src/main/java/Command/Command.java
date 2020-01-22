@@ -1,18 +1,17 @@
 package Command;
 
+import KeyboardLayout.InlineKeyboardLayout;
 import Storage.Connect;
+import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 public class Command {
@@ -54,35 +53,33 @@ public class Command {
         }
 
         if (command.equals("register")) {
-            c.insertUnregeisteredUser(user.getId(), user.getUserName());
+            c.insertUnregeisteredUser(user.getId(), user.getFirstName());
             sendMessage.setText("Successfully Registered");
         }
 
-        if (command.equals("Manage Group")) {
+        if (command.equals("Add/Delete Member")) {
             int groupId = c.getGroupId(user.getId());
             System.out.println(groupId);
 
-            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
+            inlineKeyboardLayout.setInlineKeyboardMarkup(inlineKeyboardLayout.getManageGroupMenu(), "", "destroy");
 
-            InlineKeyboardButton showGroupMember = new InlineKeyboardButton().setText("Group Member")
-                    .setCallbackData("Memberlist");
-            InlineKeyboardButton deleteMember = new InlineKeyboardButton().setText("Delete Member")
-                    .setCallbackData("DeleteProcess");
-            InlineKeyboardButton addMember = new InlineKeyboardButton().setText("Add Member")
-                    .setCallbackData("AddProcess");
-
-            rowInline.add(showGroupMember);
-            rowInline.add(deleteMember);
-            rowInline.add(addMember);
-
-
-            rowsInline.add(rowInline);
-
-            markupInline.setKeyboard(rowsInline);
             sendMessage.setText("Actions:");
-            sendMessage.setReplyMarkup(markupInline);
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+        }
+
+        if(command.equals("Member List")){
+
+            Set<String[]> memberList = c.getFullMemberInformation(chatId);
+            String msg = "";
+            for(String[] infos: memberList){
+                msg += "Name:\t" + infos[0] + "\n" +
+                        "Since:\t" + infos[1] +"\n" +
+                        "Posts:\t" + infos[2] + "\n" +
+                        "---------------------------------------------------\n";
+            }
+            sendMessage.setText(msg);
+
         }
 
         if (command.equals("/menu")) {
@@ -95,8 +92,8 @@ public class Command {
             KeyboardRow row = new KeyboardRow();
 
             row.add("New Group");
-            row.add("Manage Group");
-            row.add("Report Problem");
+            row.add("Add/Delete Member");
+            row.add("Member List");
 
             keyboard.add(row);
 
