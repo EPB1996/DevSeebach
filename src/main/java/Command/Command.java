@@ -104,12 +104,10 @@ public class Command {
                 row.add("Member List");
                 keyboard.add(row);
                 row = new KeyboardRow();
-                row.add("Show Memberstatus");
                 row.add("Leave Group");
                 row.add("Stats");
                 keyboard.add(row);
             }else{
-                row.add("Show Memberstatus");
                 row.add("Leave Group");
                 row.add("Stats");
                 keyboard.add(row);
@@ -122,6 +120,57 @@ public class Command {
             sendMessage.setText("Here is your menu");
             sendMessage.setReplyMarkup(keyboardMarkup);
 
+        }
+
+        if(command.equals("Leave Group")){
+            HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
+
+            Set<Pair<String, String>> availableGroups = new HashSet<>();
+
+            for (String key : memberOfGroup.keySet()) {
+
+                availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+
+            }
+
+            InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
+            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                    "LeaveProcess:", "destroy");
+            sendMessage.setText("Leave Group Process:");
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+        }
+
+        if(command.equals("Stats")){
+            Set<String[]> memberList = c.getFullUserInformation(chatId);
+            String msg = "";
+            for(String[] infos: memberList){
+                msg += "Name:\t" + infos[0] + "\n" +
+                        "Since:\t" + infos[1] +"\n" +
+                        "Posts:\t" + infos[2] + "\n" +
+                        "---------------------------------------------------\n";
+            }
+            sendMessage.setText(msg);
+        }
+
+
+        //maybe at some time i can implement this
+        if(command.equals("Join Request")){
+            HashMap<String, String> openGroups = c.getOwnerGroupPairs(chatId);
+
+            Set<Pair<String, String>> availableGroups = new HashSet<>();
+
+
+            for (String key : openGroups.keySet()) {
+
+                availableGroups.add(new Pair<>(openGroups.get(key)+"'s Group", key));
+
+            }
+
+            InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
+            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                    "JoinRequest:", "destroy");
+            sendMessage.setText("Request to join:");
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         }
 
         if(command.equals("test")){

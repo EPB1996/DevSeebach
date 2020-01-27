@@ -1,6 +1,8 @@
 package Storage;
 
 
+import org.glassfish.grizzly.utils.Pair;
+
 import java.sql.*;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -111,7 +113,7 @@ public class Connect {
 
         try (Connection conn = this.connect();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql);
+             ResultSet rs = stmt.executeQuery(sql)
              ) {
 
         } catch (SQLException e) {
@@ -138,7 +140,7 @@ public class Connect {
      * @param ownerId :fotowall owner who started this group
      */
     public boolean insertNewGroup(int ownerId,String ownerName) {
-        String sql = "INSERT INTO [Group](GroupOwner,GroupName) VALUES(?,?)";
+        String sql = "INSERT INTO [Group](GroupOwner,GroupName,Privat) VALUES(?,?,0)";
 
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -317,6 +319,26 @@ public class Connect {
 
     }
 
+    public Set<String[]> getFullUserInformation(long chatId){
+        Set<String[]> res = new HashSet<>();
+        String sql = "SELECT UserName,RegisteredSince,PostNumber FROM [RegisteredUser] WHERE UserId = " + chatId;
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.add(new String[]{rs.getString("UserName"),String.valueOf(rs.getDate("RegisteredSince")),
+                        String.valueOf(rs.getInt("PostNumber"))});
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
+    }
+
     /**
      * Gets Set of owners
      * @return Set<Long> of owners
@@ -339,6 +361,40 @@ public class Connect {
         return res;
 
     }
+
+    /**
+     * Get set groupname and groupid
+     * @return Set<Pair<long,string>>
+     */
+    public HashMap<String,String> getOwnerGroupPairs(long chatId){
+        HashMap<String,String> res = new HashMap<>();
+        String sql = "SELECT GroupOwner,GroupName\n" +
+                "FROM [Group]\n" +
+                "WHERE Privat = 0 \n" +
+                "EXCEPT\n" +
+                "SELECT GroupOwner,GroupName\n" +
+                "FROM [Group],UserGroup\n" +
+                "WHERE UserGroup.UserId = "+chatId+"\n" +
+                "AND UserGroup.GroupId = [Group].GroupOwner";
+
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.put(rs.getString("GroupOwner"),rs.getString("GroupName"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
+    }
+
+
 
 
 

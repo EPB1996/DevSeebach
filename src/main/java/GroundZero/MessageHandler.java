@@ -32,6 +32,9 @@ public class MessageHandler extends TelegramLongPollingBot {
 
 
         if (update.hasCallbackQuery()) {
+
+
+
                 long chatId = update.getCallbackQuery().getMessage().getChatId();
                 int msgId = update.getCallbackQuery().getMessage().getMessageId();
                 change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
@@ -53,6 +56,8 @@ public class MessageHandler extends TelegramLongPollingBot {
 
 
         } else {
+
+            int msgId = update.getMessage().getMessageId();
             if (message.hasText()) {
                 response = commandOperationExecuter.reactToIncomingMessage(new TextCommandOperation(new Command(message)));
                 if(response.getText().contains("register")){
@@ -63,6 +68,7 @@ public class MessageHandler extends TelegramLongPollingBot {
             }
 
             try {
+                response.setReplyToMessageId(msgId);
                 execute(response);
             } catch (TelegramApiException e) {
                 e.printStackTrace();

@@ -74,7 +74,7 @@ public class Callback {
 
             DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
             String strDate = "unknown";
-            if(userInformation.get("MemberSince")!= "null")
+            if(userInformation.get("MemberSince").equals("null"))
                 strDate = dateFormat.format(Date.valueOf(userInformation.get("MemberSince")));
 
             InlineKeyboardButton button = new InlineKeyboardButton();
@@ -199,6 +199,59 @@ public class Callback {
 
             return null;
         }
+
+        if(callbackString.contains("LeaveProcessBack")){
+            HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
+
+            Set<Pair<String, String>> availableGroups = new HashSet<>();
+
+            for (String key : memberOfGroup.keySet()) {
+
+                availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+
+            }
+
+            inlineKeyboardLayout = new InlineKeyboardLayout();
+            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                    "LeaveProcess:", "destroy");
+
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+        }
+        if(callbackString.contains("LeaveProcess:")){
+            String groupToLeave = callbackString.split(":")[1];
+            List<List<InlineKeyboardButton>> rowsInLine;
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+            Set<Pair<String, String>> yesNoSetup = new HashSet<>();
+            yesNoSetup.add(new Pair<>("Yes", "Yes:" + groupToLeave));
+
+
+            inlineKeyboardLayout.setInlineKeyboardMarkup(yesNoSetup
+                    , "LeaveDecision:", "LeaveProcessBack");
+
+            rowsInLine = inlineKeyboardLayout.getRowsInline();
+            rowsInLine.add(0, rowInline);
+
+
+            sendMessage.setReplyMarkup(new InlineKeyboardMarkup().setKeyboard(rowsInLine));
+        }
+
+        if(callbackString.contains("LeaveDecision:")){
+            String decision = callbackString.split(":")[1];
+            if (decision.equals("Yes")) {
+
+                c.deleteMemberFromGroup(Long.parseLong(callbackString.split(":")[2]),String.valueOf(chatId));
+
+                Set<Pair<String, String>> emptySet = new HashSet();
+                emptySet.add(new Pair<>("Group has been left.", "LeaveProcessBack"));
+                inlineKeyboardLayout.setInlineKeyboardMarkup(emptySet, "", "LeaveProcessBack");
+            }
+
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+
+        }
+
+
 
 
         return this.sendMessage;
