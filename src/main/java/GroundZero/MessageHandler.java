@@ -16,10 +16,14 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class MessageHandler extends TelegramLongPollingBot {
     private long op = 198057550;
     private CommandOperationExecuter commandOperationExecuter = new CommandOperationExecuter();
     private CallbackOperationExecuter callbackOperationExecuter = new CallbackOperationExecuter();
+
 
 
     public void onUpdateReceived(Update update) {
@@ -41,6 +45,9 @@ public class MessageHandler extends TelegramLongPollingBot {
         } else {
             if (message.hasText()) {
                 response = commandOperationExecuter.reactToIncomingMessage(new TextCommandOperation(new Command(message)));
+                if(response.getText().contains("register")){
+                    notifyOp(response.getText());
+                }
             } else if (message.hasPhoto()) {
                 response = commandOperationExecuter.reactToIncomingMessage(new PhotoCommandOperation(new Command(message)));
             }
@@ -55,13 +62,13 @@ public class MessageHandler extends TelegramLongPollingBot {
 
     }
 
-    public void notifyOp(Exception e) {
+    public void notifyOp(String s) {
         /*
             TODO: i) weiteren Bot, für die Neustartung etc des eigentlichen Bots.
          */
 
         SendMessage msg = new SendMessage();
-        msg.setText(e.toString());
+        msg.setText(s);
         msg.setChatId(op);
         try {
             execute(msg);

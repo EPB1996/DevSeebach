@@ -41,7 +41,7 @@ public class Connect {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, UserId);
             pstmt.setString(2, UserName);
-            pstmt.setDate(3, new java.sql.Date(Calendar.getInstance().getTime().getTime()));
+            pstmt.setDate(3, new java.sql.Date(System.currentTimeMillis()));
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -97,22 +97,19 @@ public class Connect {
      *
      * @param ownerId :fotowall owner who started this group
      */
-    public void insertNewGroup(int ownerId) {
-
-        // SQL statement for creating a new table
+    public boolean insertNewGroup(int ownerId) {
         String sql = "INSERT INTO [Group](GroupOwner) VALUES(?)";
 
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, ownerId);
+             pstmt.setInt(1, ownerId);
 
-            // create a new table
-            pstmt.executeUpdate();
+             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-
+            return false;
         }
-
+        return true;
     }
 
     /**
@@ -150,10 +147,12 @@ public class Connect {
     public HashMap<String,String> getAvailableUsers(long chatId){
         HashMap<String, String> res = new HashMap<>();
 
-        String sql = "SELECT t1.UserId,t1.UserName\n" +
-                "FROM RegisteredUser t1\n" +
-                "LEFT JOIN UserGroup t2 ON t2.UserName = t1.UserName\n" +
-                "WHERE t2.UserName IS NULL";
+        String sql = "SELECT userId,UserName\n" +
+                "FROM RegisteredUser\n" +
+                "EXCEPT\n" +
+                "SELECT userId,UserName\n" +
+                "FROM UserGroup\n" +
+                "WHERE GroupId = "+chatId;
 
         try (Connection conn = this.connect();
              Statement stmt = conn.createStatement();
@@ -245,6 +244,31 @@ public class Connect {
         return res;
 
     }
+
+    /**
+     * Gets Set of owners
+     * @return Set<Long> of owners
+     */
+    public Set<Integer> getOwnerSet(){
+        Set<Integer> res = new HashSet<>();
+        String sql = "SELECT DISTINCT GroupId FROM [UserGroup]" ;
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                res.add(rs.getInt("GroupId"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
+    }
+
+
 
 
 }

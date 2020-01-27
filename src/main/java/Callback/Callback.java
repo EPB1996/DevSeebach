@@ -122,6 +122,7 @@ public class Callback {
             Set<Pair<String, String>> altmemberList = new HashSet<>();
 
             for (String key : registeredUser.keySet()) {
+                if(!key.equals(String.valueOf(chatId)))
                 altmemberList.add(new Pair<>(registeredUser.get(key), registeredUser.get(key) + "!" +key));
             }
 

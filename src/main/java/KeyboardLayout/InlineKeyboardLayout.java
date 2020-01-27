@@ -16,19 +16,20 @@ public class InlineKeyboardLayout {
 
     public InlineKeyboardLayout() {
         this.inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        this.manageGroupMenu = new HashSet<>();
-        manageGroupMenu.add(new Pair<>("Delete Member", "DeleteProcess"));
-        manageGroupMenu.add(new Pair<>("Add Member", "AddProcess"));
-        this.rowsInline = new ArrayList<>();
+                this.rowsInline = new ArrayList<>();
 
 
     }
+
 
     public List<List<InlineKeyboardButton>> getRowsInline() {
         return rowsInline;
     }
 
     public Set<Pair<String, String>> getManageGroupMenu() {
+        this.manageGroupMenu = new HashSet<>();
+        manageGroupMenu.add(new Pair<>("Delete Member", "DeleteProcess"));
+        manageGroupMenu.add(new Pair<>("Add Member", "AddProcess"));
         return manageGroupMenu;
     }
 
@@ -47,11 +48,11 @@ public class InlineKeyboardLayout {
             rowInline.add(button);
             anzahlEleProZeilen += 1;
             if (anzahlEleProZeilen >= 3) {
-                rowsInLine.add(rowInline);
-                rowInline = new ArrayList<>();
-                anzahlEleProZeilen = 0;
-            }
 
+            }
+            rowsInLine.add(rowInline);
+            rowInline = new ArrayList<>();
+            anzahlEleProZeilen = 0;
         }
 
         if (previous != null) {

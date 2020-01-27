@@ -1,5 +1,6 @@
 package Command;
 
+
 import KeyboardLayout.InlineKeyboardLayout;
 import Storage.Connect;
 import org.glassfish.grizzly.utils.Pair;
@@ -21,7 +22,7 @@ public class Command {
     private LocalDateTime date;
     private SendMessage sendMessage;
     private List<PhotoSize> photo;
-
+    private Set<Integer> ownerSet = new HashSet<>();
 
     public Command(Message message) {
         if (message.hasText()) {
@@ -44,17 +45,24 @@ public class Command {
         sendMessage.setText("Unknown command.");
         Connect c = new Connect();
 
+        if(ownerSet.isEmpty()){
+           ownerSet = c.getOwnerSet();
+        }
+
         if (command.equals("New Group")) {
 
+            boolean success = c.insertNewGroup(user.getId());
+            if(success)
+                sendMessage.setText("Group Created");
+            else
+                sendMessage.setText("Problem with creating Group. Group not created.");
 
-            c.insertNewGroup(user.getId());
-
-            sendMessage.setText("Group Created");
         }
 
         if (command.equals("register")) {
             c.insertUnregeisteredUser(user.getId(), user.getFirstName());
-            sendMessage.setText("Successfully Registered");
+            sendMessage.setText( user.getFirstName() + " was successfully registered");
+
         }
 
         if (command.equals("Add/Delete Member")) {
@@ -83,19 +91,29 @@ public class Command {
         }
 
         if (command.equals("/menu")) {
-
-            //TODO: Menu only availible for owner && class for makrups?
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
 
             List<KeyboardRow> keyboard = new ArrayList<>();
 
             KeyboardRow row = new KeyboardRow();
+            if(ownerSet.contains(user.getId())) {
+                row.add("New Group");
+                row.add("Add/Delete Member");
+                row.add("Member List");
+                keyboard.add(row);
+                row = new KeyboardRow();
+                row.add("Show Memberstatus");
+                row.add("Leave Group");
+                row.add("Stats");
+                keyboard.add(row);
+            }else{
+                row.add("Show Memberstatus");
+                row.add("Leave Group");
+                row.add("Stats");
+                keyboard.add(row);
+            }
 
-            row.add("New Group");
-            row.add("Add/Delete Member");
-            row.add("Member List");
 
-            keyboard.add(row);
 
             keyboardMarkup.setKeyboard(keyboard);
 
@@ -112,7 +130,15 @@ public class Command {
         /*
         TODO: set callback (do you want to upload this photo?)
          */
-        this.sendMessage.setText("Photo uploading...");
+        Set<Pair<String,String>> inlineButtons = new HashSet<>();
+        inlineButtons.add(new Pair<>("Upload","UploadProcess"));
+        inlineButtons.add(new Pair<>("Cancel","Cancel"));
+
+        InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
+        inlineKeyboardLayout.setInlineKeyboardMarkup(inlineButtons,"",null);
+
+        this.sendMessage.setText("Photo process:");
+        sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         return sendMessage;
     }
 
