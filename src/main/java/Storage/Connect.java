@@ -1,5 +1,6 @@
 package Storage;
 
+
 import java.sql.*;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -93,16 +94,56 @@ public class Connect {
     }
 
     /**
+     * Get all associated groups of chatID
+     *
+     * @param chatId ChatId of the uploader
+     *        sendTo fotowall/grouid to send to
+     *
+     *
+     */
+    public void updateUserPosts(long chatId,String sendTo) {
+
+        String sql = "UPDATE UserGroup SET PostNumber = Postnumber +1 WHERE UserId = "+chatId +
+                " And GroupId = " + sendTo;
+        String sql1 = "UPDATE RegisteredUser SET PostNumber = Postnumber +1 WHERE UserId = "+chatId;
+
+
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql);
+             ) {
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        try (Connection conn = this.connect();
+               Statement stmt = conn.createStatement();
+               ResultSet rs = stmt.executeQuery(sql1);
+        ) {
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+
+
+
+    }
+
+    /**
      * create new group which has access to fotowall
      *
      * @param ownerId :fotowall owner who started this group
      */
-    public boolean insertNewGroup(int ownerId) {
-        String sql = "INSERT INTO [Group](GroupOwner) VALUES(?)";
+    public boolean insertNewGroup(int ownerId,String ownerName) {
+        String sql = "INSERT INTO [Group](GroupOwner,GroupName) VALUES(?,?)";
 
         try (Connection conn = this.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
              pstmt.setInt(1, ownerId);
+             pstmt.setString(2, ownerName);
 
              pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -139,6 +180,37 @@ public class Connect {
         }
         return groupId;
     }
+
+    /**
+     * Get all associated groups of chatID
+     *
+     * @param ownerId ChatId of the owner
+     *                <p>
+     *                returns groups
+     * @return
+     */
+    public HashMap<String,String> getAssociatedGroups(long ownerId) {
+
+        HashMap<String,String> res = new HashMap<>();
+
+        String sql = "SELECT GroupOwner,GroupName\n" +
+                "FROM [Group],UserGroup \n" +
+                "WHERE UserGroup.UserId = "+ ownerId+ "\n" +
+                "AND UserGroup.GroupId = [Group].GroupOwner" ;
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next())
+            res.put(rs.getString("GroupOwner"),rs.getString("GroupName"));
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+    }
+
 
     /**
      * Get All registered User which are not already added to you

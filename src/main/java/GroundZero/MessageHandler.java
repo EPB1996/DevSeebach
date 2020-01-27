@@ -13,11 +13,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.HashSet;
-import java.util.Set;
+
 
 public class MessageHandler extends TelegramLongPollingBot {
     private long op = 198057550;
@@ -31,11 +29,23 @@ public class MessageHandler extends TelegramLongPollingBot {
         SendMessage response = new SendMessage();
         EditMessageReplyMarkup change;
 
-        if (update.hasCallbackQuery()) {
 
+
+        if (update.hasCallbackQuery()) {
+                long chatId = update.getCallbackQuery().getMessage().getChatId();
+                int msgId = update.getCallbackQuery().getMessage().getMessageId();
                 change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
+
                 try {
+                    if(change == null){
+                        SendMessage msg = new SendMessage();
+                        msg.setReplyToMessageId(msgId);
+                        msg.setText("Process finished");
+                        msg.setChatId(chatId);
+                        execute(msg);
+                    }else
                     execute(change);
+
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }

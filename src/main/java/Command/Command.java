@@ -51,9 +51,11 @@ public class Command {
 
         if (command.equals("New Group")) {
 
-            boolean success = c.insertNewGroup(user.getId());
-            if(success)
+            boolean success = c.insertNewGroup(user.getId(),user.getFirstName());
+            if(success) {
+                c.addMemberToGroup(user.getId(), user.getFirstName() + "!" + String.valueOf(user.getId()));
                 sendMessage.setText("Group Created");
+            }
             else
                 sendMessage.setText("Problem with creating Group. Group not created.");
 
@@ -122,6 +124,10 @@ public class Command {
 
         }
 
+        if(command.equals("test")){
+            sendMessage = handlePhotoCommand();
+        }
+
 
         return sendMessage;
     }
@@ -132,7 +138,7 @@ public class Command {
          */
         Set<Pair<String,String>> inlineButtons = new HashSet<>();
         inlineButtons.add(new Pair<>("Upload","UploadProcess"));
-        inlineButtons.add(new Pair<>("Cancel","Cancel"));
+        inlineButtons.add(new Pair<>("Cancel","destroy"));
 
         InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
         inlineKeyboardLayout.setInlineKeyboardMarkup(inlineButtons,"",null);

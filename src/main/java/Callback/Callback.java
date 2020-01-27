@@ -42,6 +42,9 @@ public class Callback {
         InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
         String callbackString = callback.getData();
 
+        /**
+         * manages group callbacks
+         */
         if (callbackString.equals("Manage Group")) {
             inlineKeyboardLayout.setInlineKeyboardMarkup(inlineKeyboardLayout.getManageGroupMenu(), "", "destroy");
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
@@ -58,8 +61,6 @@ public class Callback {
             inlineKeyboardLayout.setInlineKeyboardMarkup(altmemberList, "deleteUser:", "Manage Group");
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         }
-
-
 
         if (callbackString.contains("deleteUser:")) {
             String userToLookup = callbackString.split(":")[1];
@@ -119,14 +120,14 @@ public class Callback {
 
             HashMap<String, String> registeredUser = c.getAvailableUsers(chatId);
 
-            Set<Pair<String, String>> altmemberList = new HashSet<>();
+            Set<Pair<String, String>> UnionUsers = new HashSet<>();
 
             for (String key : registeredUser.keySet()) {
                 if(!key.equals(String.valueOf(chatId)))
-                altmemberList.add(new Pair<>(registeredUser.get(key), registeredUser.get(key) + "!" +key));
+                UnionUsers.add(new Pair<>(registeredUser.get(key), registeredUser.get(key) + "!" +key));
             }
 
-            inlineKeyboardLayout.setInlineKeyboardMarkup(altmemberList, "addUser:", "Manage Group");
+            inlineKeyboardLayout.setInlineKeyboardMarkup(UnionUsers, "addUser:", "Manage Group");
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         }
 
@@ -167,7 +168,39 @@ public class Callback {
             inlineKeyboardLayout.setInlineKeyboardMarkup(destroy,"",null);
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
 
+            return null;
         }
+
+        /**
+         * manages Photo callbacks
+         */
+        if(callbackString.equals("UploadProcess")) {
+            HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
+
+            Set<Pair<String, String>> availableGroups = new HashSet<>();
+
+            for (String key : memberOfGroup.keySet()) {
+
+                    availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+
+            }
+
+            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                    "sendPhoto:", null);
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+        }
+
+        if(callbackString.contains("sendPhoto")){
+            String sendTo = callbackString.split(":")[1];
+
+            //TODO: datatransfer logic here
+
+            c.updateUserPosts(chatId,sendTo);
+
+            return null;
+        }
+
+
         return this.sendMessage;
     }
 
