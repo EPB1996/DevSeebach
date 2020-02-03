@@ -3,6 +3,7 @@ package Command;
 
 import KeyboardLayout.InlineKeyboardLayout;
 import Storage.Connect;
+import Storage.PhotoQueue;
 import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -29,7 +30,6 @@ public class Command {
             this.command = message.getText();
             this.photo = null;
         } else {
-            this.command = "photo";
             this.photo = message.getPhoto();
         }
         this.user = message.getFrom();
@@ -153,7 +153,7 @@ public class Command {
         }
 
 
-        //maybe at some time i can implement this
+        //maybe at some time implement this
         if(command.equals("Join Request")){
             HashMap<String, String> openGroups = c.getOwnerGroupPairs(chatId);
 
@@ -185,6 +185,11 @@ public class Command {
         /*
         TODO: set callback (do you want to upload this photo?)
          */
+
+
+
+
+
         Set<Pair<String,String>> inlineButtons = new HashSet<>();
         inlineButtons.add(new Pair<>("Upload","UploadProcess"));
         inlineButtons.add(new Pair<>("Cancel","destroy"));

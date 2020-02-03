@@ -20,7 +20,7 @@ public class Connect {
 
     private Connection connect() {
         // SQLite connection string
-        String url = "jdbc:sqlite:C://Users/EPB/IdeaProjects/fotoseebach/tests.db";
+        String url = "jdbc:sqlite:/home/epb1996/Project/fotoseebach/tests.db";
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
@@ -28,6 +28,28 @@ public class Connect {
             System.out.println(e.getMessage());
         }
         return conn;
+    }
+
+
+    public Pair<String,String> getOwnerIp(String owner){
+        String sql = "SELECT OwnerName,OwnerIp FROM OwnerIp WHERE OwnerId = " + owner;
+        Pair<String,String> res = new Pair<>();
+
+        try (Connection conn = this.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+
+             res.setFirst(rs.getString("OwnerName"));
+             res.setSecond(rs.getString("OwnerIp"));
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+
+        }
+        return res;
+
     }
 
     /**

@@ -2,24 +2,25 @@ package Callback;
 
 import KeyboardLayout.InlineKeyboardLayout;
 import Storage.Connect;
+import Storage.PhotoQueue;
 import org.glassfish.grizzly.utils.Pair;
+
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+
+import java.io.*;
+import java.io.File;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class Callback {
-
+public class Callback  {
+    String photoFolder = "/home/epb1996/Pictures/FotoWall/";
     private CallbackQuery callback;
     private long chatId;
     private User user;
@@ -184,18 +185,48 @@ public class Callback {
                     availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
 
             }
+            availableGroups.add(new Pair<>("All","All"));
 
             inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
                     "sendPhoto:", null);
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         }
 
+
         if(callbackString.contains("sendPhoto")){
             String sendTo = callbackString.split(":")[1];
+            PhotoQueue queue = PhotoQueue.getStreamInstance();
+            System.out.println("Queue: " + queue.get());
+            java.io.File photoToSend = queue.getPhotoOfId(chatId);
 
-            //TODO: datatransfer logic here
+            DateFormat dateFormat = new SimpleDateFormat("HH_mm_ss");
+            java.util.Date date = new java.util.Date();
 
-            c.updateUserPosts(chatId,sendTo);
+
+            try {
+                byte[] data = getBytesFromFile(photoToSend);
+                System.out.println(data);
+                OutputStream out = new FileOutputStream(new File(photoFolder + sendTo +"/"+ callback.getFrom().getFirstName()
+                        +dateFormat.format(date)+".jpg"));
+                out.write(data);
+                out.close();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+
+
+            if(sendTo.equals("All")){
+                HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
+                for (String key: memberOfGroup.keySet()){
+                    c.updateUserPosts(chatId,key);
+                }
+            }else{
+                c.updateUserPosts(chatId,sendTo);
+            }
+
+            Pair<String,String> ownerIp = c.getOwnerIp(sendTo);
+
+            sendToScreen(ownerIp,sendTo);
 
             return null;
         }
@@ -257,6 +288,75 @@ public class Callback {
         return this.sendMessage;
     }
 
+    private void sendToScreen(Pair<String,String> ownerIp,String sendTo){
+        Process p;
+
+        try {
+
+            //TODO: Portforwarding & owner/ip table
+            List<String> cmdList = new ArrayList<String>();
+            // adding command and args to the list
+            cmdList.add("sh");
+            cmdList.add("uploader.sh");
+            cmdList.add(ownerIp.getFirst()+"@"+ownerIp.getSecond());
+            cmdList.add(sendTo);
+            ProcessBuilder pb = new ProcessBuilder(cmdList);
+            p = pb.start();
+
+            p.waitFor();
+            BufferedReader reader=new BufferedReader(new InputStreamReader(
+                    p.getInputStream()));
+            String line;
+            while((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    private static byte[] getBytesFromFile(File file) throws IOException {
+
+        // Get the size of the file
+        long length = file.length();
+
+        // You cannot create an array using a long type.
+        // It needs to be an int type.
+        // Before converting to an int type, check
+        // to ensure that file is not larger than Integer.MAX_VALUE.
+        if (length > Integer.MAX_VALUE) {
+            // File is too large
+            throw new IOException("File is too large!");
+        }
+
+        // Create the byte array to hold the data
+        byte[] bytes = new byte[(int)length];
+
+        // Read in the bytes
+        int offset = 0;
+        int numRead = 0;
+
+        InputStream is = new FileInputStream(file);
+        try {
+            while (offset < bytes.length
+                    && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                offset += numRead;
+            }
+        } finally {
+            is.close();
+        }
+
+        // Ensure all the bytes have been read in
+        if (offset < bytes.length) {
+            throw new IOException("Could not completely read file "+file.getName());
+        }
+        return bytes;
+    }
 
     String print() {
         return date + " :\t " + user.getUserName() + " \t " + callback.getData();
