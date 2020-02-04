@@ -27,6 +27,7 @@ public class Callback  {
     private LocalDateTime date;
     private EditMessageReplyMarkup sendMessage;
     private long message_id;
+    private Set<String> alreadySentTo = new HashSet<>();
 
     public Callback(Update update) {
         this.callback = update.getCallbackQuery();
@@ -34,7 +35,6 @@ public class Callback  {
         this.chatId = user.getId();
         this.date = java.time.LocalDateTime.now();
         this.message_id = callback.getMessage().getMessageId();
-
         this.sendMessage = new EditMessageReplyMarkup().setChatId(chatId).setMessageId((int) message_id);
     }
 
@@ -42,6 +42,7 @@ public class Callback  {
         Connect c = new Connect();
         InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
         String callbackString = callback.getData();
+        System.out.println(alreadySentTo.size());
 
         /**
          * manages group callbacks
@@ -185,7 +186,7 @@ public class Callback  {
                     availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
 
             }
-            availableGroups.add(new Pair<>("All","All"));
+            availableGroups.add(new Pair<>("Done","destroy"));
 
             inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
                     "sendPhoto:", null);
@@ -194,9 +195,14 @@ public class Callback  {
 
 
         if(callbackString.contains("sendPhoto")){
+
+
             String sendTo = callbackString.split(":")[1];
+            if(sendTo.equals("destroy")){
+                return null;
+            }
             PhotoQueue queue = PhotoQueue.getStreamInstance();
-            System.out.println("Queue: " + queue.get());
+
             java.io.File photoToSend = queue.getPhotoOfId(chatId);
 
             DateFormat dateFormat = new SimpleDateFormat("HH_mm_ss");
@@ -215,20 +221,34 @@ public class Callback  {
             }
 
 
-            if(sendTo.equals("All")){
-                HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
-                for (String key: memberOfGroup.keySet()){
-                    c.updateUserPosts(chatId,key);
-                }
-            }else{
-                c.updateUserPosts(chatId,sendTo);
-            }
 
+            c.updateUserPosts(chatId,sendTo);
             Pair<String,String> ownerIp = c.getOwnerIp(sendTo);
-
             sendToScreen(ownerIp,sendTo);
 
-            return null;
+
+
+
+            HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
+
+            Set<Pair<String, String>> availableGroups = new HashSet<>();
+
+            for (String key : memberOfGroup.keySet()) {
+                if(alreadySentTo.contains(key)){
+                    availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group (added)", key));
+                }else
+                availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+
+            }
+
+
+            availableGroups.add(new Pair<>("Done","destroy"));
+
+
+            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                    "sendPhoto:", null);
+            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+
         }
 
         if(callbackString.contains("LeaveProcessBack")){
@@ -291,9 +311,10 @@ public class Callback  {
     private void sendToScreen(Pair<String,String> ownerIp,String sendTo){
         Process p;
 
+        alreadySentTo.add(sendTo);
+
         try {
 
-            //TODO: Portforwarding & owner/ip table
             List<String> cmdList = new ArrayList<String>();
             // adding command and args to the list
             cmdList.add("sh");
@@ -311,10 +332,10 @@ public class Callback  {
                 System.out.println(line);
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+
             e.printStackTrace();
         }
 

@@ -29,7 +29,7 @@ public class PhotoQueue {
         for(Pair<Long,java.io.File> ele: queue){
             if(ele.getFirst().equals(chatId)) {
                 res = ele.getSecond();
-                queue.remove(ele);
+
             }
 
         }
