@@ -13,10 +13,12 @@ import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
@@ -27,6 +29,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class MessageHandler extends TelegramLongPollingBot {
@@ -45,21 +49,40 @@ public class MessageHandler extends TelegramLongPollingBot {
 
         if (update.hasCallbackQuery()) {
 
-
-
                 long chatId = update.getCallbackQuery().getMessage().getChatId();
                 int msgId = update.getCallbackQuery().getMessage().getMessageId();
-                change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
+
+            if(update.getCallbackQuery().getData().equals("destroy")){
+                DeleteMessage deleteMessage = new DeleteMessage();
+                deleteMessage.setMessageId(msgId);
+                deleteMessage.setChatId(chatId);
 
                 try {
+                 execute(deleteMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+            }
+                change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
+
+
+
+
+            try {
                     if(change == null){
-                        SendMessage msg = new SendMessage();
-                        msg.setReplyToMessageId(msgId);
-                        msg.setText("Process finished");
-                        msg.setChatId(chatId);
-                        execute(msg);
+                        DeleteMessage deleteMessage = new DeleteMessage();
+                        deleteMessage.setMessageId(msgId);
+                        deleteMessage.setChatId(chatId);
+
+                        response.setText("Upload complete.");
+                        response.setChatId(chatId);
+
+
+                        execute(response);
+                        execute(deleteMessage);
                     }else
-                    execute(change);
+                        execute(change);
 
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
@@ -76,6 +99,8 @@ public class MessageHandler extends TelegramLongPollingBot {
                     notifyOp(response.getText());
                 }
             } else if (message.hasPhoto()) {
+
+
                 PhotoQueue photoQueue = PhotoQueue.getStreamInstance();
                 String filePath = getFilePath(message.getPhoto().stream()
                         .sorted(Comparator.comparing(PhotoSize::getFileSize).reversed())
@@ -85,7 +110,7 @@ public class MessageHandler extends TelegramLongPollingBot {
                 //download the File
                 java.io.File img = downloadPhotoByFilePath(filePath);
 
-                photoQueue.add(new Pair<>(message.getChatId(),img));
+                photoQueue.add(new Pair<Pair<Long,java.io.File>, Set<String>>(new Pair<>(message.getChatId(),img),new HashSet<String>()));
 
                 response = commandOperationExecuter.reactToIncomingMessage(new PhotoCommandOperation(new Command(message)));
             }

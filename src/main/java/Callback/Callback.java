@@ -165,13 +165,13 @@ public class Callback  {
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
         }
 
+        /*
         if(callbackString.equals("destroy")){
             Set<Pair<String,String>> destroy = new HashSet<>();
             inlineKeyboardLayout.setInlineKeyboardMarkup(destroy,"",null);
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
-
-            return null;
         }
+        */
 
         /**
          * manages Photo callbacks
@@ -196,12 +196,15 @@ public class Callback  {
 
         if(callbackString.contains("sendPhoto")){
 
+            PhotoQueue queue = PhotoQueue.getStreamInstance();
 
             String sendTo = callbackString.split(":")[1];
+
             if(sendTo.equals("destroy")){
+                queue.removePhotoFromQueue(chatId);
+
                 return null;
             }
-            PhotoQueue queue = PhotoQueue.getStreamInstance();
 
             java.io.File photoToSend = queue.getPhotoOfId(chatId);
 
@@ -220,13 +223,12 @@ public class Callback  {
                 e.printStackTrace();
             }
 
-
-
             c.updateUserPosts(chatId,sendTo);
+            queue.addToAlreadySentSet(chatId,sendTo);
+
+
             Pair<String,String> ownerIp = c.getOwnerIp(sendTo);
             sendToScreen(ownerIp,sendTo);
-
-
 
 
             HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
@@ -234,10 +236,9 @@ public class Callback  {
             Set<Pair<String, String>> availableGroups = new HashSet<>();
 
             for (String key : memberOfGroup.keySet()) {
-                if(alreadySentTo.contains(key)){
-                    availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group (added)", key));
-                }else
-                availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+                if(!queue.getAlreadySentSet(chatId).contains(key)){
+                    availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
+                }
 
             }
 
@@ -310,8 +311,6 @@ public class Callback  {
 
     private void sendToScreen(Pair<String,String> ownerIp,String sendTo){
         Process p;
-
-        alreadySentTo.add(sendTo);
 
         try {
 

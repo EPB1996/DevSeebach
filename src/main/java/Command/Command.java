@@ -186,10 +186,6 @@ public class Command {
         TODO: set callback (do you want to upload this photo?)
          */
 
-
-
-
-
         Set<Pair<String,String>> inlineButtons = new HashSet<>();
         inlineButtons.add(new Pair<>("Upload","UploadProcess"));
         inlineButtons.add(new Pair<>("Cancel","destroy"));

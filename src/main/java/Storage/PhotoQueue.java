@@ -4,12 +4,10 @@ import org.glassfish.grizzly.utils.Pair;
 import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class PhotoQueue {
-    static Queue<Pair<Long,java.io.File>> queue = new LinkedList<Pair<Long,java.io.File>>();
+    static Queue<Pair<Pair<Long,java.io.File>, Set<String>>> queue = new LinkedList<Pair<Pair<Long,java.io.File>,Set<String>>>();
     private static PhotoQueue queueInstance = null;
 
     public static PhotoQueue getStreamInstance() {
@@ -20,15 +18,15 @@ public class PhotoQueue {
         return queueInstance;
     }
 
-    public Queue<Pair<Long,java.io.File>> get() {
+    public Queue<Pair<Pair<Long,java.io.File>, Set<String>>> get() {
         return queue;
     }
 
     public java.io.File getPhotoOfId(long chatId) {
         java.io.File res = null;
-        for(Pair<Long,java.io.File> ele: queue){
-            if(ele.getFirst().equals(chatId)) {
-                res = ele.getSecond();
+        for(Pair<Pair<Long,java.io.File>, Set<String>> ele: queue){
+            if(ele.getFirst().getFirst().equals(chatId)) {
+                res = ele.getFirst().getSecond();
 
             }
 
@@ -36,17 +34,41 @@ public class PhotoQueue {
         return res;
     }
 
-
-    public void add(Pair<Long,java.io.File> value) {
-        synchronized (queue) {
+    public void add(Pair<Pair<Long,java.io.File>, Set<String>> value){
+        synchronized (queue){
             queue.add(value);
         }
     }
 
+    public void addToAlreadySentSet(long chatId,String value) {
+        for(Pair<Pair<Long,java.io.File>, Set<String>> ele: queue){
+            if(ele.getFirst().getFirst().equals(chatId)) {
+                ele.getSecond().add(value);
+            }
+        }
+    }
+
+    public Set<String> getAlreadySentSet(long chatId){
+        Set<String> res = new HashSet<>();
+        for(Pair<Pair<Long,java.io.File>, Set<String>> ele: queue){
+            if(ele.getFirst().getFirst().equals(chatId)) {
+                res = ele.getSecond();
+            }
+        }
+        return res;
+    }
 
 
-    public Pair<Long,java.io.File> poll() {
-        Pair<Long,java.io.File> data = queue.poll();
+    public void removePhotoFromQueue(long chatId){
+        for(Pair<Pair<Long,java.io.File>, Set<String>> ele: queue) {
+            if (ele.getFirst().getFirst().equals(chatId)) {
+                queue.remove(ele);
+            }
+        }
+    }
+
+    public Pair<Pair<Long,java.io.File>, Set<String>> poll() {
+        Pair<Pair<Long,java.io.File>, Set<String>> data = queue.poll();
         return data;
     }
 
