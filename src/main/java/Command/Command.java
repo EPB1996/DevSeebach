@@ -12,6 +12,10 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -68,8 +72,6 @@ public class Command {
         }
 
         if (command.equals("Add/Delete Member")) {
-            int groupId = c.getGroupId(user.getId());
-            System.out.println(groupId);
 
             InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
             inlineKeyboardLayout.setInlineKeyboardMarkup(inlineKeyboardLayout.getManageGroupMenu(), "", "destroy");
@@ -83,11 +85,12 @@ public class Command {
             Set<String[]> memberList = c.getFullMemberInformation(chatId);
             String msg = "";
             for(String[] infos: memberList){
-                msg += "Name:\t" + infos[0] + "\n" +
-                        "Since:\t" + infos[1] +"\n" +
-                        "Posts:\t" + infos[2] + "\n" +
-                        "---------------------------------------------------\n";
+                msg += "Name:\t_" + infos[0] + "_\n" +
+                        "Since:\t_" + infos[1] +"_\n" +
+                        "Posts:\t_" + infos[2] + "_\n\n";
             }
+            sendMessage.setParseMode("markdown");
+
             sendMessage.setText(msg);
 
         }
@@ -128,7 +131,7 @@ public class Command {
             Set<Pair<String, String>> availableGroups = new HashSet<>();
 
             for (String key : memberOfGroup.keySet()) {
-
+                if(!key.equals(String.valueOf(chatId)))
                 availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
 
             }
@@ -146,8 +149,8 @@ public class Command {
             for(String[] infos: memberList){
                 msg += "Name:\t" + infos[0] + "\n" +
                         "Since:\t" + infos[1] +"\n" +
-                        "Posts:\t" + infos[2] + "\n" +
-                        "---------------------------------------------------\n";
+                        "Posts:\t" + infos[2] + "\n \n";
+
             }
             sendMessage.setText(msg);
         }
@@ -182,9 +185,6 @@ public class Command {
     }
 
     SendMessage handlePhotoCommand() {
-        /*
-        TODO: set callback (do you want to upload this photo?)
-         */
 
         Set<Pair<String,String>> inlineButtons = new HashSet<>();
         inlineButtons.add(new Pair<>("Upload","UploadProcess"));
@@ -199,6 +199,7 @@ public class Command {
     }
 
     String print() {
+
         return date + " :\t " + user.getUserName() + " \t " + command;
     }
 }

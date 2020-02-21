@@ -13,6 +13,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.io.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,7 +45,7 @@ public class Callback  {
         Connect c = new Connect();
         InlineKeyboardLayout inlineKeyboardLayout = new InlineKeyboardLayout();
         String callbackString = callback.getData();
-        System.out.println(alreadySentTo.size());
+
 
         /**
          * manages group callbacks
@@ -67,27 +70,9 @@ public class Callback  {
         if (callbackString.contains("deleteUser:")) {
             String userToLookup = callbackString.split(":")[1];
 
-            HashMap<String, String> userInformation = c.getGroupMember(chatId, Integer.valueOf(userToLookup));
-
 
             List<List<InlineKeyboardButton>> rowsInLine;
             List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
-
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
-            String strDate = "unknown";
-            if(userInformation.get("MemberSince").equals("null"))
-                strDate = dateFormat.format(Date.valueOf(userInformation.get("MemberSince")));
-
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(userInformation.get("UserName")
-                    + "(" + strDate + ")"
-                    + "(" + userInformation.get("PostNumber") +
-                    ")");
-            button.setCallbackData(callbackString);
-
-            rowInline.add(button);
-
 
             Set<Pair<String, String>> yesNoSetup = new HashSet<>();
             yesNoSetup.add(new Pair<>("Yes", "Yes:" + userToLookup));
@@ -110,9 +95,14 @@ public class Callback  {
             if (decision.equals("Yes")) {
                 c.deleteMemberFromGroup(chatId, callbackString.split(":")[2]);
 
-                Set<Pair<String, String>> emptySet = new HashSet();
-                emptySet.add(new Pair<>("Member has been deleted", "DeleteProcess"));
-                inlineKeyboardLayout.setInlineKeyboardMarkup(emptySet, "", "DeleteProcess");
+                HashMap<String, String> memberList = c.getMemberlist(chatId);
+                Set<Pair<String, String>> altmemberList = new HashSet<>();
+                for (String key : memberList.keySet()) {
+                    altmemberList.add(new Pair<>(memberList.get(key), key));
+                }
+
+                inlineKeyboardLayout.setInlineKeyboardMarkup(altmemberList, "deleteUser:", "Manage Group");
+
             }
 
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
@@ -157,9 +147,18 @@ public class Callback  {
             if (decision.equals("Yes")) {
                 c.addMemberToGroup(chatId, callbackString.split(":")[2]);
 
-                Set<Pair<String, String>> emptySet = new HashSet();
-                emptySet.add(new Pair<>("Member has been added", "AddProcess"));
-                inlineKeyboardLayout.setInlineKeyboardMarkup(emptySet, "", "AddProcess");
+                HashMap<String, String> registeredUser = c.getAvailableUsers(chatId);
+
+                Set<Pair<String, String>> UnionUsers = new HashSet<>();
+
+                for (String key : registeredUser.keySet()) {
+                    if(!key.equals(String.valueOf(chatId)))
+                        UnionUsers.add(new Pair<>(registeredUser.get(key), registeredUser.get(key) + "!" +key));
+                }
+
+                inlineKeyboardLayout.setInlineKeyboardMarkup(UnionUsers, "addUser:", "Manage Group");
+
+
             }
 
             sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
@@ -186,7 +185,7 @@ public class Callback  {
                     availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
 
             }
-            availableGroups.add(new Pair<>("Done","destroy"));
+            availableGroups.add(new Pair<>("Cancel","destroy"));
 
             inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
                     "sendPhoto:", null);
@@ -202,7 +201,6 @@ public class Callback  {
 
             if(sendTo.equals("destroy")){
                 queue.removePhotoFromQueue(chatId);
-
                 return null;
             }
 
@@ -214,7 +212,7 @@ public class Callback  {
 
             try {
                 byte[] data = getBytesFromFile(photoToSend);
-                System.out.println(data);
+
                 OutputStream out = new FileOutputStream(new File(photoFolder + sendTo +"/"+ callback.getFrom().getFirstName()
                         +dateFormat.format(date)+".jpg"));
                 out.write(data);
@@ -230,7 +228,6 @@ public class Callback  {
             Pair<String,String> ownerIp = c.getOwnerIp(sendTo);
             sendToScreen(ownerIp,sendTo);
 
-
             HashMap<String, String> memberOfGroup = c.getAssociatedGroups(chatId);
 
             Set<Pair<String, String>> availableGroups = new HashSet<>();
@@ -242,13 +239,19 @@ public class Callback  {
 
             }
 
+            if(!availableGroups.isEmpty()){
+                availableGroups.add(new Pair<>("Cancel","destroy"));
+                inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
+                        "sendPhoto:", null);
+                sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+            }else{
+                return null;
+            }
 
-            availableGroups.add(new Pair<>("Done","destroy"));
 
 
-            inlineKeyboardLayout.setInlineKeyboardMarkup(availableGroups,
-                    "sendPhoto:", null);
-            sendMessage.setReplyMarkup(inlineKeyboardLayout.getInlineKeyboardMarkup());
+
+
 
         }
 
@@ -257,8 +260,10 @@ public class Callback  {
 
             Set<Pair<String, String>> availableGroups = new HashSet<>();
 
-            for (String key : memberOfGroup.keySet()) {
 
+
+            for (String key : memberOfGroup.keySet()) {
+                if(!key.equals(String.valueOf(chatId)))
                 availableGroups.add(new Pair<>(memberOfGroup.get(key)+"'s Group", key));
 
             }
@@ -326,10 +331,13 @@ public class Callback  {
             p.waitFor();
             BufferedReader reader=new BufferedReader(new InputStreamReader(
                     p.getInputStream()));
+            /*
             String line;
             while((line = reader.readLine()) != null) {
                 System.out.println(line);
             }
+            */
+
         } catch (IOException e) {
 
             e.printStackTrace();
@@ -379,6 +387,7 @@ public class Callback  {
     }
 
     String print() {
+
         return date + " :\t " + user.getUserName() + " \t " + callback.getData();
     }
 }

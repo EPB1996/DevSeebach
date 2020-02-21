@@ -281,7 +281,7 @@ public class Connect {
             while (rs.next()) {
                 res.put(String.valueOf(rs.getInt("UserId")), rs.getString("UserName"));
             }
-            System.out.println(res.get(rs.getLong("UserId")));
+
 
 
         } catch (SQLException e) {

@@ -37,6 +37,8 @@ public class MessageHandler extends TelegramLongPollingBot {
     private long op = 198057550;
     private CommandOperationExecuter commandOperationExecuter = new CommandOperationExecuter();
     private CallbackOperationExecuter callbackOperationExecuter = new CallbackOperationExecuter();
+    int msgId = 0;
+
 
 
 
@@ -47,43 +49,58 @@ public class MessageHandler extends TelegramLongPollingBot {
 
 
 
+
+
         if (update.hasCallbackQuery()) {
 
-                long chatId = update.getCallbackQuery().getMessage().getChatId();
-                int msgId = update.getCallbackQuery().getMessage().getMessageId();
+            long chatId = update.getCallbackQuery().getMessage().getChatId();
+            int callbackmsgId = update.getCallbackQuery().getMessage().getMessageId();
+            String callback = update.getCallbackQuery().getData();
 
-            if(update.getCallbackQuery().getData().equals("destroy")){
-                DeleteMessage deleteMessage = new DeleteMessage();
-                deleteMessage.setMessageId(msgId);
-                deleteMessage.setChatId(chatId);
+            if(callback.contains("AddDecision:Yes") || callback.contains("DeleteDecision:Yes")){
 
+                if(callback.contains("AddDecision:Yes")) {
+
+                    response.setChatId( Long.parseLong(callback.split(":")[2].split("!")[1]));
+                    response.setText("Welcome to " + update.getCallbackQuery().getFrom().getFirstName() + "'s Group. \n \n" +
+                            "Please provide pictures in PORTRAIT ORIENTATION (if not instructed otherwise by the owner " +
+                            "of this FotoWall)");
+                }else{
+
+                    response.setChatId(Long.parseLong(callback.split(":")[2]));
+                    response.setText("You have been deleted from  " + update.getCallbackQuery().getFrom()
+                            .getFirstName() + "'s Group. \n");
+
+                }
                 try {
-                 execute(deleteMessage);
+                    execute(response);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
 
             }
-                change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
 
-
-
+            change = callbackOperationExecuter.reactToCallback(new CallbackOperation(new Callback(update)));
 
             try {
-                    if(change == null){
-                        DeleteMessage deleteMessage = new DeleteMessage();
-                        deleteMessage.setMessageId(msgId);
-                        deleteMessage.setChatId(chatId);
 
-                        response.setText("Upload complete.");
-                        response.setChatId(chatId);
+                if(callback.equals("destroy") || callback.contains("sendPhoto:destroy") || change == null ) {
+
+                    DeleteMessage deleteCallback = new DeleteMessage();
+                    DeleteMessage deleteCommand = new DeleteMessage();
 
 
-                        execute(response);
-                        execute(deleteMessage);
-                    }else
-                        execute(change);
+                    deleteCommand.setMessageId(msgId);
+                    deleteCommand.setChatId(chatId);
 
+                    deleteCallback.setMessageId(callbackmsgId);
+                    deleteCallback.setChatId(chatId);
+
+                    execute(deleteCallback);
+                    execute(deleteCommand);
+                }else{
+                    execute(change);
+                }
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
@@ -92,15 +109,14 @@ public class MessageHandler extends TelegramLongPollingBot {
 
         } else {
 
-            int msgId = update.getMessage().getMessageId();
+            msgId = update.getMessage().getMessageId();
             if (message.hasText()) {
                 response = commandOperationExecuter.reactToIncomingMessage(new TextCommandOperation(new Command(message)));
                 if(response.getText().contains("register")){
                     notifyOp(response.getText());
                 }
             } else if (message.hasPhoto()) {
-
-
+                msgId = update.getMessage().getMessageId();
                 PhotoQueue photoQueue = PhotoQueue.getStreamInstance();
                 String filePath = getFilePath(message.getPhoto().stream()
                         .sorted(Comparator.comparing(PhotoSize::getFileSize).reversed())

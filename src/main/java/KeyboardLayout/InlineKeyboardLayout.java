@@ -58,7 +58,10 @@ public class InlineKeyboardLayout {
         if (previous != null) {
             InlineKeyboardButton backButton = new InlineKeyboardButton().setText("Back")
                     .setCallbackData(previous);
+            InlineKeyboardButton doneButton = new InlineKeyboardButton().setText("Cancel")
+                    .setCallbackData("destroy");
             rowInline.add(backButton);
+            rowInline.add(doneButton);
         }
 
 
